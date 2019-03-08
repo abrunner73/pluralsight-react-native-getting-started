@@ -1,4 +1,37 @@
 import moment from 'moment';
+import { ObjectUnsubscribedError } from 'rxjs';
+import uuid from 'uuid';
+import Expo from 'expo';
+
+const {manifest} = Expo.Constants;
+const api=manifest.packagerOpts.dev
+  ? manifest.debuggerHost.split(':').shift().concat(':3000')
+  : 'productionurl.com'
+
+const url = `http://${api}/events`;
+//const url='http://localhost:3000/events';
+
+export function getEvents () {
+  return fetch(url)
+    .then(response => response.json())
+    .then(events => events.map(e => ({...e, date: new Date(e.date)})));
+}
+
+export function saveEvent({title, date}) {
+  return fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({
+      title, 
+      date, 
+      id: uuid(),
+    }),
+    headers: new Headers({
+      'Content-Type': 'application/json'
+    })
+  })
+  .then(res => res.json())
+  .catch(err => console.error(err))
+}
 
 export function formatDate(dateString) {
   const parsed = moment(new Date(dateString));
